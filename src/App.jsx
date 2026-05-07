@@ -2,6 +2,7 @@ import React, { useState, createContext, useContext } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import translations from './translations';
+import './mobile.css';
 
 const AppContext = createContext();
 
@@ -91,7 +92,7 @@ function Navbar() {
         </button>
 
         {/* Center Links + Right Controls */}
-        <div className="collapse navbar-collapse" id="navbarNav">
+        <div className={`collapse navbar-collapse${currentPage === 'home' ? ' navbar-home-collapse' : ''}`} id="navbarNav">
           {/* Links — centered */}
           <ul className="navbar-nav mx-auto mb-2 mb-lg-0 d-flex align-items-center gap-1">
             {navItems.map(item => (
@@ -188,7 +189,7 @@ function HomePage() {
         />
         <div style={{ position: 'absolute', inset: 0, zIndex: 1, background: 'linear-gradient(to right, rgba(6,13,31,0.95) 0%, rgba(6,13,31,0.75) 45%, rgba(6,13,31,0.15) 80%, transparent 100%)' }} />
         <div style={{ position: 'absolute', inset: 0, zIndex: 2, display: 'flex', alignItems: 'center' }}>
-          <div dir={lang === 'en' ? 'ltr' : 'rtl'} style={{ width: '520px', maxWidth: '90vw', padding: '0 52px' }}>
+          <div dir={lang === 'en' ? 'ltr' : 'rtl'} className="hero-content-inner" style={{ width: '520px', maxWidth: '90vw', padding: '0 52px' }}>
             {lang === 'ar' && (
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(187,202,225,0.15)', border: '1px solid rgba(187,202,225,0.3)', borderRadius: '50px', padding: '6px 18px', fontSize: '13px', color: '#bbcae1', marginBottom: '20px', backdropFilter: 'blur(8px)' }}>
                 <img src="https://flagcdn.com/w20/jo.png" alt="JO" style={{ width: '18px', borderRadius: '2px' }} />
@@ -524,7 +525,7 @@ function AssessmentPage() {
         </div>
 
         {/* Divider */}
-        <div style={{ width: '2px', flexShrink: 0, position: 'relative', zIndex: 10,
+        <div className="split-divider" style={{ width: '2px', flexShrink: 0, position: 'relative', zIndex: 10,
           background: 'linear-gradient(to bottom, transparent 0%, rgba(255,255,255,0.2) 30%, rgba(255,255,255,0.2) 70%, transparent 100%)',
         }}>
           <div style={{
@@ -986,7 +987,7 @@ function AssessmentPage() {
                         <span style={{ fontWeight: 700, fontSize: '15px' }}>{question}</span>
                       </div>
 
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', paddingRight: '36px' }}>
+                      <div className="options-row" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', paddingRight: '36px' }}>
                         {options.map(({ label, icon }) => {
                           const selected = personality[key] === label;
                           return (
@@ -1158,7 +1159,7 @@ function AssessmentPage() {
                         </span>
                         <span style={{ fontWeight: 700, fontSize: '15px' }}>{question}</span>
                       </div>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', paddingRight: '36px' }}>
+                      <div className="options-row" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', paddingRight: '36px' }}>
                         {options.map(({ label, icon }) => {
                           const selected = formData.personality[key] === label;
                           return (
@@ -1729,7 +1730,7 @@ function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div style={{ borderTop: `1px solid ${divider}`, padding: '20px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+        <div className="footer-bottom" style={{ borderTop: `1px solid ${divider}`, padding: '20px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
           <small style={{ color: sub }}>{t('footer_copy')}</small>
           <small style={{ color: sub }}>{t('footer_made')}</small>
         </div>
@@ -1798,7 +1799,7 @@ function Chatbot() {
       {/* Chat Window */}
       {isOpen && (
         <div
-          className={`card shadow-lg position-fixed ${darkMode ? 'bg-dark text-white' : 'bg-white'}`}
+          className={`card shadow-lg position-fixed chat-window ${darkMode ? 'bg-dark text-white' : 'bg-white'}`}
           style={{
             bottom: window.innerWidth < 576 ? 0 : '30px',
             ...(window.innerWidth < 576 ? { left: 0, right: 0, borderRadius: '20px 20px 0 0' } : (lang === 'en' ? { right: '30px' } : { left: '30px' })),

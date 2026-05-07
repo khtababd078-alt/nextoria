@@ -1,0 +1,94 @@
+/* ===================================================
+   MOBILE FIXES — does NOT touch desktop (≥ 576px)
+   =================================================== */
+
+/* ── Split screen: stack vertically on small screens ── */
+@media (max-width: 575.98px) {
+  .split-screen-wrapper {
+    flex-direction: column !important;
+    height: auto !important;
+    min-height: calc(100vh - 64px) !important;
+  }
+  .split-screen-side {
+    flex: 1 1 auto !important;
+    min-height: 46vh !important;
+    width: 100% !important;
+  }
+  .split-divider {
+    display: none !important;
+  }
+}
+
+/* ── Hero content: less side padding on mobile ── */
+@media (max-width: 575.98px) {
+  .hero-content-inner {
+    padding: 0 20px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  .hero-content-inner h1 {
+    font-size: clamp(24px, 7vw, 40px) !important;
+  }
+  .hero-content-inner p {
+    font-size: 15px !important;
+  }
+}
+
+/* ── Navbar collapse: dark background on mobile (home page) ── */
+@media (max-width: 991.98px) {
+  .navbar-collapse.navbar-home-collapse {
+    background: rgba(6, 13, 31, 0.95);
+    border-radius: 14px;
+    padding: 10px 12px;
+    margin-top: 8px;
+    backdrop-filter: blur(12px);
+  }
+}
+
+/* ── Chatbot: flex layout so body stretches ── */
+.chat-window {
+  display: flex !important;
+  flex-direction: column !important;
+}
+.chat-window .card-body {
+  flex: 1 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+}
+
+/* ── Assessment personality options: no indent on mobile ── */
+@media (max-width: 575.98px) {
+  .options-row {
+    padding-right: 0 !important;
+    padding-left: 0 !important;
+  }
+}
+
+/* ── General touch friendliness ── */
+@media (max-width: 575.98px) {
+  /* Bigger tap targets for interest buttons */
+  .interest-btn {
+    width: 38px !important;
+    height: 38px !important;
+    font-size: 14px !important;
+  }
+
+  /* Container padding tighter on mobile */
+  .container {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+
+  /* Assessment card padding */
+  .card-body.p-4 {
+    padding: 20px !important;
+  }
+
+  /* Footer bottom bar: center on mobile */
+  .footer-bottom {
+    flex-direction: column !important;
+    text-align: center !important;
+    gap: 6px !important;
+  }
+}
