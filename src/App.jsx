@@ -298,7 +298,7 @@ function HomePage() {
   );
 }
 
-const API_BASE = 'http://localhost:5000';
+const API_BASE = 'https://nextoria-backend-production.up.railway.app';
 
 function recommendField(subjects, interests, personality, lang = 'ar') {
   const n = (v, max = 200) => (parseFloat(v) || 0) / max * 100;

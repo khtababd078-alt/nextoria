@@ -6,3 +6,5 @@ groq>=0.9
 scikit-learn>=1.8
 numpy>=1.26
 pandas>=2.2
+gunicorn>=21.2
+openpyxl>=3.1
