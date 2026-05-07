@@ -1799,7 +1799,13 @@ function Chatbot() {
       {isOpen && (
         <div
           className={`card shadow-lg position-fixed ${darkMode ? 'bg-dark text-white' : 'bg-white'}`}
-          style={{ bottom: '30px', ...(lang === 'en' ? { right: '30px' } : { left: '30px' }), width: '350px', height: '450px', zIndex: 1050 }}
+          style={{
+            bottom: window.innerWidth < 576 ? 0 : '30px',
+            ...(window.innerWidth < 576 ? { left: 0, right: 0, borderRadius: '20px 20px 0 0' } : (lang === 'en' ? { right: '30px' } : { left: '30px' })),
+            width: window.innerWidth < 576 ? '100%' : '350px',
+            height: window.innerWidth < 576 ? '70vh' : '450px',
+            zIndex: 1050
+          }}
           dir="rtl"
         >
           {/* Header */}
