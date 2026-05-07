@@ -1,0 +1,208 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Custom Range Slider */
+.form-range::-webkit-slider-thumb {
+  background: #681a15;
+}
+
+.form-range::-moz-range-thumb {
+  background: #681a15;
+}
+
+/* Smooth transitions */
+.card {
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #681a15;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #4d120f;
+}
+
+/* ===== Brand Color Overrides ===== */
+/* Burgundy Red: #681a15 | Sky Blue: #bbcae1 */
+
+/* Light mode app background */
+.bg-light {
+  background-color: #e8eff8 !important;
+}
+
+/* Buttons */
+.btn-danger {
+  background-color: #681a15 !important;
+  border-color: #681a15 !important;
+  color: #ffffff !important;
+}
+.btn-danger:hover,
+.btn-danger:focus,
+.btn-danger:active {
+  background-color: #4d120f !important;
+  border-color: #4d120f !important;
+}
+.btn-outline-danger {
+  color: #681a15 !important;
+  border-color: #681a15 !important;
+}
+.btn-outline-danger:hover {
+  background-color: #681a15 !important;
+  color: #ffffff !important;
+  border-color: #681a15 !important;
+}
+
+/* Text & Backgrounds */
+.text-danger {
+  color: #681a15 !important;
+}
+.bg-danger {
+  background-color: #681a15 !important;
+}
+.bg-danger.bg-opacity-10 {
+  background-color: rgba(104, 26, 21, 0.1) !important;
+}
+
+/* Progress bars & Badges */
+.progress-bar.bg-danger {
+  background-color: #681a15 !important;
+}
+.badge.bg-danger {
+  background-color: #681a15 !important;
+}
+
+/* Card header */
+.card-header.bg-danger {
+  background-color: #681a15 !important;
+}
+
+/* Hero responsive */
+@media (max-width: 920px) {
+  .hero-split-section {
+    flex-direction: column-reverse !important;
+  }
+  .hero-split-section > div:first-child {
+    min-height: 45vw !important;
+    max-height: 360px !important;
+    flex: none !important;
+  }
+  .hero-split-section > div:last-child {
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 44px 28px 52px !important;
+  }
+}
+@media (max-width: 540px) {
+  .hero-split-section > div:first-child {
+    max-height: 260px !important;
+  }
+}
+
+/* Active nav link */
+.nav-link.active.text-danger,
+.fw-bold.text-danger {
+  color: #681a15 !important;
+}
+
+/* ===== Split-screen mobile ===== */
+@media (max-width: 768px) {
+  .split-screen-wrapper {
+    flex-direction: column !important;
+    height: auto !important;
+    min-height: 100vh !important;
+  }
+  .split-screen-side {
+    flex: none !important;
+    min-height: 50vh !important;
+    width: 100% !important;
+  }
+}
+
+/* ===== Navbar mobile ===== */
+@media (max-width: 991px) {
+  .navbar-collapse {
+    background: rgba(13, 13, 20, 0.97);
+    padding: 12px 16px 20px;
+    border-radius: 0 0 16px 16px;
+    margin-top: 8px;
+    backdrop-filter: blur(12px);
+  }
+}
+
+/* ===== Footer mobile ===== */
+@media (max-width: 576px) {
+  footer .row > div {
+    text-align: center;
+  }
+  footer .row > div ul li button,
+  footer .row > div ul li span {
+    text-align: center !important;
+    display: block;
+  }
+}
+
+/* Brand flag animation */
+@keyframes flagWave {
+  0%   { transform: rotate(0deg) scale(1); }
+  15%  { transform: rotate(-8deg) scale(1.08); }
+  30%  { transform: rotate(6deg) scale(1.05); }
+  45%  { transform: rotate(-5deg) scale(1.08); }
+  60%  { transform: rotate(4deg) scale(1.04); }
+  75%  { transform: rotate(-2deg) scale(1.02); }
+  100% { transform: rotate(0deg) scale(1); }
+}
+
+.brand-flag {
+  animation: flagWave 2.8s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+
+/* Brand text gradient */
+.brand-text {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 3.2rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, #ffffff 0%, #bbcae1 50%, #ffffff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 2px 8px rgba(187,202,225,0.5));
+  line-height: 1;
+  letter-spacing: -1px;
+}
+
+/* Brand text in light mode (non-home pages) */
+.brand-text-dark {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 3.2rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, #681a15 0%, #9b2c24 50%, #681a15 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 1px 4px rgba(104,26,21,0.35));
+  line-height: 1;
+  letter-spacing: -1px;
+}
