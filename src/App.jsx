@@ -1674,8 +1674,6 @@ function AboutPage() {
                   style={{ background: '#25d366', borderRadius: '10px', padding: '8px 18px', fontSize: '13px', color: '#fff', textDecoration: 'none', fontWeight: 600 }}>WhatsApp</a>
                 <a href="https://www.instagram.com/mayyarr_962?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" target="_blank" rel="noopener noreferrer"
                   style={{ background: 'linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045)', borderRadius: '10px', padding: '8px 18px', fontSize: '13px', color: '#fff', textDecoration: 'none', fontWeight: 600 }}>Instagram</a>
-                <a href="https://www.instagram.com/mayyarr_962?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" target="_blank" rel="noopener noreferrer"
-                  style={{ background: 'linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045)', borderRadius: '10px', padding: '8px 18px', fontSize: '13px', color: '#fff', textDecoration: 'none', fontWeight: 600 }}>Instagram</a>
               </div>
             </div>
             <div style={{ background: card, border: `1.5px solid ${border}`, borderRadius: '24px', padding: '36px 28px', textAlign: 'center' }}>
