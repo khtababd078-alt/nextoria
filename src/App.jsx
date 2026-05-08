@@ -3,6 +3,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import translations from './translations';
 import './mobile.css';
+import { isEligible, getMajorMinScore } from './majorData';
 
 const AppContext = createContext();
 
@@ -673,7 +674,15 @@ function AssessmentPage() {
 
   // ML Results screen (tawjihi step 5)
   if (step === 5 && studentType === 'tawjihi' && mlResults) {
-    const recs = mlResults.recommendations || [];
+    const allRecs = mlResults.recommendations || [];
+    const studentGpa = parseFloat(gpa) || 0;
+
+    // Split into eligible and ineligible based on minimum admission score
+    const eligibleRecs = allRecs.filter(r => isEligible(r.major, studentGpa));
+    const ineligibleRecs = allRecs.filter(r => !isEligible(r.major, studentGpa));
+
+    // Re-rank eligible recs starting from 1
+    const recs = eligibleRecs.map((r, i) => ({ ...r, displayRank: i + 1 }));
     const top = recs[0];
     const fieldLabel = tawjihiFields.find(f => f.id === selectedField)?.label || '';
     return (
@@ -688,6 +697,18 @@ function AssessmentPage() {
             {lang === 'en' ? <>Based on <strong>{fieldLabel}</strong> field and GPA <strong>{gpa}%</strong></> : <>بناءً على حقل <strong>{fieldLabel}</strong> ومعدل <strong>{gpa}%</strong></>}
           </p>
         </div>
+
+        {/* No eligible majors warning */}
+        {recs.length === 0 && (
+          <div className="alert alert-danger d-flex gap-3 align-items-start mb-4 rounded-4">
+            <span style={{ fontSize: '1.5rem', flexShrink: 0 }}>🚫</span>
+            <p className="mb-0" style={{ lineHeight: 1.9, fontSize: '14px' }}>
+              {lang === 'en'
+                ? `Your GPA (${gpa}%) does not meet the minimum admission requirements for any major in this field. Consider exploring other fields or check parallel enrollment options.`
+                : `معدلك (${gpa}%) لا يصل إلى الحد الأدنى المطلوب لأي تخصص في هذا الحقل. جرب حقلاً آخر أو اطّلع على خيارات القبول الموازي.`}
+            </p>
+          </div>
+        )}
 
         {/* Top Pick */}
         {top && (
@@ -723,37 +744,78 @@ function AssessmentPage() {
           </div>
         )}
 
-        {/* All Recommendations */}
-        <h5 className="fw-bold mb-3">{t('result_majors_list')}</h5>
-        <div className="d-flex flex-column gap-2 mb-5">
-          {recs.map(r => (
-            <div
-              key={r.rank}
-              className={`card border-0 shadow-sm ${darkMode ? 'bg-secondary text-white' : ''}`}
-            >
-              <div className="card-body py-3 px-4">
-                <div className="d-flex justify-content-between align-items-center mb-2">
-                  <div className="d-flex align-items-center gap-2">
-                    <span
-                      className="badge rounded-pill"
-                      style={{ background: r.rank === 1 ? '#681a15' : '#bbcae1', color: r.rank === 1 ? '#fff' : '#333', minWidth: '28px' }}
-                    >
-                      {r.rank}
-                    </span>
-                    <span className="fw-semibold" style={{ fontSize: '15px' }}>{r.major}</span>
+        {/* Eligible Recommendations */}
+        {recs.length > 0 && (
+          <>
+            <h5 className="fw-bold mb-3">{t('result_majors_list')}</h5>
+            <div className="d-flex flex-column gap-2 mb-4">
+              {recs.map(r => (
+                <div
+                  key={r.rank}
+                  className={`card border-0 shadow-sm ${darkMode ? 'bg-secondary text-white' : ''}`}
+                >
+                  <div className="card-body py-3 px-4">
+                    <div className="d-flex justify-content-between align-items-center mb-2">
+                      <div className="d-flex align-items-center gap-2">
+                        <span
+                          className="badge rounded-pill"
+                          style={{ background: r.displayRank === 1 ? '#681a15' : '#bbcae1', color: r.displayRank === 1 ? '#fff' : '#333', minWidth: '28px' }}
+                        >
+                          {r.displayRank}
+                        </span>
+                        <span className="fw-semibold" style={{ fontSize: '15px' }}>{r.major}</span>
+                      </div>
+                      <div className="d-flex align-items-center gap-2">
+                        {getMajorMinScore(r.major) !== null && (
+                          <span className={`badge ${darkMode ? 'bg-success' : 'bg-success'}`} style={{ fontSize: '11px' }}>
+                            {lang === 'en' ? `Min: ${getMajorMinScore(r.major)}%` : `الحد الأدنى: ${getMajorMinScore(r.major)}%`}
+                          </span>
+                        )}
+                        <span className="text-danger fw-bold" style={{ fontSize: '14px' }}>{r.confidence}%</span>
+                      </div>
+                    </div>
+                    <div className="progress" style={{ height: '6px' }}>
+                      <div
+                        className="progress-bar bg-danger"
+                        style={{ width: `${r.confidence}%`, transition: 'width 0.8s ease' }}
+                      />
+                    </div>
                   </div>
-                  <span className="text-danger fw-bold" style={{ fontSize: '14px' }}>{r.confidence}%</span>
                 </div>
-                <div className="progress" style={{ height: '6px' }}>
-                  <div
-                    className="progress-bar bg-danger"
-                    style={{ width: `${r.confidence}%`, transition: 'width 0.8s ease' }}
-                  />
-                </div>
-              </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </>
+        )}
+
+        {/* Ineligible Recommendations (below minimum) */}
+        {ineligibleRecs.length > 0 && (
+          <div className="mb-5">
+            <h6 className="fw-bold mb-3" style={{ color: '#999' }}>
+              {lang === 'en' ? 'Below minimum GPA (not eligible):' : 'تحت الحد الأدنى (لا تستوفي الشرط):'}
+            </h6>
+            <div className="d-flex flex-column gap-2">
+              {ineligibleRecs.map(r => (
+                <div
+                  key={r.rank}
+                  className="card border-0"
+                  style={{ opacity: 0.5, background: darkMode ? 'rgba(255,255,255,0.04)' : '#f5f5f5' }}
+                >
+                  <div className="card-body py-2 px-4">
+                    <div className="d-flex justify-content-between align-items-center">
+                      <div className="d-flex align-items-center gap-2">
+                        <span style={{ fontSize: '14px' }}>🚫</span>
+                        <span className="fw-semibold" style={{ fontSize: '14px', textDecoration: 'line-through', color: '#999' }}>{r.major}</span>
+                      </div>
+                      <span className="badge bg-danger bg-opacity-75" style={{ fontSize: '11px' }}>
+                        {lang === 'en' ? `Min: ${getMajorMinScore(r.major)}%` : `الحد الأدنى: ${getMajorMinScore(r.major)}%`}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Actions */}
         <div className="d-flex gap-3 justify-content-center flex-wrap">
@@ -1610,6 +1672,10 @@ function AboutPage() {
                   style={{ background: '#0077b5', borderRadius: '10px', padding: '8px 18px', fontSize: '13px', color: '#fff', textDecoration: 'none', fontWeight: 600 }}>in LinkedIn</a>
                 <a href="https://wa.me/96277999351" target="_blank" rel="noopener noreferrer"
                   style={{ background: '#25d366', borderRadius: '10px', padding: '8px 18px', fontSize: '13px', color: '#fff', textDecoration: 'none', fontWeight: 600 }}>WhatsApp</a>
+                <a href="https://www.instagram.com/mayyarr_962?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" target="_blank" rel="noopener noreferrer"
+                  style={{ background: 'linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045)', borderRadius: '10px', padding: '8px 18px', fontSize: '13px', color: '#fff', textDecoration: 'none', fontWeight: 600 }}>Instagram</a>
+                <a href="https://www.instagram.com/mayyarr_962?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" target="_blank" rel="noopener noreferrer"
+                  style={{ background: 'linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045)', borderRadius: '10px', padding: '8px 18px', fontSize: '13px', color: '#fff', textDecoration: 'none', fontWeight: 600 }}>Instagram</a>
               </div>
             </div>
             <div style={{ background: card, border: `1.5px solid ${border}`, borderRadius: '24px', padding: '36px 28px', textAlign: 'center' }}>
@@ -1755,9 +1821,12 @@ function Chatbot() {
   const allMessages = messages.length === 0
     ? [{ text: greeting, isBot: true }]
     : messages;
-  const chatHistory = messages
-    .filter(m => m.text !== greeting)
-    .map(m => ({ role: m.isBot ? 'assistant' : 'user', content: m.text }));
+  // Include the virtual greeting as the first assistant message so the LLM
+  // always has context for short replies like "اه" or "لا"
+  const chatHistory = [
+    { role: 'assistant', content: greeting },
+    ...messages.map(m => ({ role: m.isBot ? 'assistant' : 'user', content: m.text })),
+  ];
 
   const handleSend = async () => {
     if (!input.trim() || isTyping) return;
