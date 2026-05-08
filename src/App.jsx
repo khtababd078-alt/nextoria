@@ -1880,13 +1880,10 @@ function Chatbot() {
           <div className="card-header text-white d-flex justify-content-between align-items-center"
             style={{ background: 'linear-gradient(135deg,#8b0000,#c0392b)', borderBottom: '1px solid rgba(255,255,255,0.15)' }}>
             <div className="d-flex align-items-center gap-2">
-              <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', flexShrink: 0 }}>
-                🤖
-              </div>
               <div>
-                <div className="d-flex align-items-center gap-1">
+                <div className="d-flex align-items-center gap-2">
                   <strong style={{ fontSize: '15px' }}>Nashmi</strong>
-                  <span style={{ fontSize: '16px' }}>🇯🇴</span>
+                  <img src="https://flagcdn.com/w40/jo.png" alt="Jordan" style={{ width: '26px', borderRadius: '3px' }} />
                 </div>
                 <small className="d-block" style={{ opacity: 0.8, fontSize: '11px' }}>
                   {t('chat_subtitle')}
