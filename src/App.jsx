@@ -1847,6 +1847,9 @@ function Chatbot() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const inputRef = React.useRef(null);
+
+  const focusInput = () => { setTimeout(() => inputRef.current?.focus(), 0); };
   const messagesEndRef = React.useRef(null);
 
   React.useEffect(() => {
@@ -1884,6 +1887,7 @@ function Chatbot() {
       setMessages(prev => [...prev, { text: t('chat_conn_error'), isBot: true }]);
     } finally {
       setIsTyping(false);
+      focusInput();
     }
   };
 
@@ -1892,7 +1896,7 @@ function Chatbot() {
       {/* Chat Button */}
       {!isOpen && (
         <button
-          onClick={() => setIsOpen(true)}
+          onClick={() => { setIsOpen(true); focusInput(); }}
           className="btn btn-danger rounded-circle shadow-lg d-flex align-items-center justify-content-center position-fixed"
           style={{ bottom: '30px', ...(lang === 'en' ? { right: '30px' } : { left: '30px' }), width: '60px', height: '60px', zIndex: 1050 }}
         >
@@ -1932,7 +1936,7 @@ function Chatbot() {
 
           {/* Messages */}
           <div className="card-body overflow-auto" style={{ height: '300px', overflowX: 'hidden' }}
-            onMouseDown={e => { e.preventDefault(); document.querySelector('.chat-window textarea')?.focus(); }}
+            onMouseDown={e => { e.preventDefault(); focusInput(); }}
           >
             {allMessages.map((msg, idx) => (
               <div key={idx} style={{ display: 'flex', justifyContent: msg.isBot ? 'flex-end' : 'flex-start', marginBottom: '8px' }}>
@@ -1968,6 +1972,7 @@ function Chatbot() {
                 className={`form-control ${darkMode ? 'bg-dark text-white border-secondary' : ''}`}
                 style={{ resize: 'none', overflowY: 'hidden', lineHeight: '1.5' }}
                 ref={el => {
+                  inputRef.current = el;
                   if (el) {
                     el.style.height = 'auto';
                     el.style.height = Math.min(el.scrollHeight, 80) + 'px';
