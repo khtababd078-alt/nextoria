@@ -24,6 +24,7 @@ export default function App() {
     setTimeout(() => {
       setCurrentPage(page);
       setPageVisible(true);
+      window.scrollTo({ top: 0, behavior: 'instant' });
     }, 220);
   };
 
@@ -213,6 +214,22 @@ function HomePage() {
                 {t('hero_explore')}
               </button>
             </div>
+          </div>
+        </div>
+
+        {/* Scroll indicator */}
+        <div style={{
+          position: 'absolute', bottom: '32px', left: '50%', transform: 'translateX(-50%)',
+          zIndex: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px',
+          cursor: 'pointer', opacity: 0.75,
+        }}
+          onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })}
+        >
+          <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase' }}>Scroll</span>
+          <div style={{ animation: 'scrollBounce 1.6s ease-in-out infinite' }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
           </div>
         </div>
       </section>

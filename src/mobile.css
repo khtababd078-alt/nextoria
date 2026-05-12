@@ -2,6 +2,12 @@
    MOBILE — Professional responsive styles
    =================================================== */
 
+/* Scroll indicator bounce animation */
+@keyframes scrollBounce {
+  0%, 100% { transform: translateY(0); opacity: 0.8; }
+  50%       { transform: translateY(7px); opacity: 1; }
+}
+
 /* ── Split screen: stack vertically on mobile ── */
 @media (max-width: 575.98px) {
   .split-screen-wrapper {
