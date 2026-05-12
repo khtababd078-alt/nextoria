@@ -418,9 +418,9 @@ function AssessmentPage() {
 
   const subjectList = [
     { key: 'رياضيات',          label: lang === 'en' ? 'Mathematics'        : 'رياضيات',          icon: '📐', color: '#1a3568', max: 200 },
-    { key: 'علوم',             label: lang === 'en' ? 'Digital Skills'     : 'مهارات رقمية',     icon: '💻', color: '#1a6858', max: 100 },
     { key: 'لغة عربية',       label: lang === 'en' ? 'Arabic Language'     : 'لغة عربية',       icon: '📖', color: '#681a15', max: 200 },
     { key: 'لغة إنجليزية',    label: lang === 'en' ? 'English Language'    : 'لغة إنجليزية',    icon: '🌍', color: '#3d1a68', max: 200 },
+    { key: 'علوم',             label: lang === 'en' ? 'Digital Skills'     : 'مهارات رقمية',     icon: '💻', color: '#1a6858', max: 100 },
     { key: 'كيمياء',          label: lang === 'en' ? 'Chemistry'           : 'كيمياء',          icon: '⚗️', color: '#1a5868', max: 100 },
     { key: 'فيزياء',          label: lang === 'en' ? 'Physics'             : 'فيزياء',          icon: '⚡', color: '#68521a', max: 100 },
     { key: 'أحياء',           label: lang === 'en' ? 'Biology'             : 'أحياء',           icon: '🧬', color: '#0f6b3a', max: 100 },
