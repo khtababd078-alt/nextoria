@@ -1312,7 +1312,7 @@ function AssessmentPage() {
                   {studentType === 'grade10' && step < getTotalSteps() && (
                     <button
                       onClick={() => setStep(step + 1)}
-                      disabled={step === 3 && (!formData.personality.thinking || !formData.personality.social_type || !formData.personality.learning)}
+                      disabled={step === 1 && !['رياضيات','لغة عربية','لغة إنجليزية'].every(k => parseFloat(formData.subjects[k]) > 0)}
                       className="btn btn-danger btn-lg px-4"
                     >
                       {t('btn_next')}
@@ -1320,7 +1320,11 @@ function AssessmentPage() {
                   )}
 
                   {studentType === 'grade10' && step === getTotalSteps() && (
-                    <button onClick={handleGrade10Submit} className="btn btn-danger btn-lg px-4">
+                    <button
+                      onClick={handleGrade10Submit}
+                      disabled={!formData.personality.thinking || !formData.personality.social_type || !formData.personality.learning}
+                      className="btn btn-danger btn-lg px-4"
+                    >
                       احصل على التوصيات ←
                     </button>
                   )}
