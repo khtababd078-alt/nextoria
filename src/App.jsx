@@ -1931,7 +1931,9 @@ function Chatbot() {
           </div>
 
           {/* Messages */}
-          <div className="card-body overflow-auto" style={{ height: '300px', overflowX: 'hidden' }}>
+          <div className="card-body overflow-auto" style={{ height: '300px', overflowX: 'hidden' }}
+            onMouseDown={e => { e.preventDefault(); document.querySelector('.chat-window textarea')?.focus(); }}
+          >
             {allMessages.map((msg, idx) => (
               <div key={idx} style={{ display: 'flex', justifyContent: msg.isBot ? 'flex-end' : 'flex-start', marginBottom: '8px' }}>
                 <div
@@ -1962,9 +1964,15 @@ function Chatbot() {
                 onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
                 placeholder={t('chat_placeholder')}
                 disabled={isTyping}
+                autoFocus
                 className={`form-control ${darkMode ? 'bg-dark text-white border-secondary' : ''}`}
                 style={{ resize: 'none', overflowY: 'hidden', lineHeight: '1.5' }}
-                ref={el => { if (el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 80) + 'px'; } }}
+                ref={el => {
+                  if (el) {
+                    el.style.height = 'auto';
+                    el.style.height = Math.min(el.scrollHeight, 80) + 'px';
+                  }
+                }}
               />
               <button onClick={handleSend} disabled={isTyping} className="btn btn-danger align-self-end">{t('chat_send')}</button>
             </div>
