@@ -222,7 +222,7 @@ const translations = {
     footer_made: 'صُنع بـ ❤️ في الأردن 🇯🇴',
 
     // Chatbot
-    chat_greeting: 'أهلاً! أنا نشمي 👋 مساعدك للتوجيه الجامعي.\n\nأنت طالب أول ثانوي أو ثاني ثانوي؟',
+    chat_greeting: 'أهلاً! أنا نشمي 👋\nكيف بقدر أساعدك اليوم؟',
     chat_subtitle: 'مساعدك الافتراضي',
     chat_placeholder: 'اكتب رسالتك...',
     chat_send: 'إرسال',

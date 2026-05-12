@@ -1312,7 +1312,7 @@ function AssessmentPage() {
                   {studentType === 'grade10' && step < getTotalSteps() && (
                     <button
                       onClick={() => setStep(step + 1)}
-                      disabled={step === 1 && !['رياضيات','لغة عربية','لغة إنجليزية'].every(k => parseFloat(formData.subjects[k]) > 0)}
+                      disabled={step === 1 && !subjectList.every(s => parseFloat(formData.subjects[s.key]) > 0)}
                       className="btn btn-danger btn-lg px-4"
                     >
                       {t('btn_next')}
