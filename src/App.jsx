@@ -3,7 +3,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import translations from './translations';
 import './mobile.css';
-import { isEligible, getMajorMinScore } from './majorData';
+import { isEligible, getMajorDetails } from './majorData';
 
 const AppContext = createContext();
 
@@ -96,7 +96,7 @@ function Navbar() {
         <div className={`collapse navbar-collapse${currentPage === 'home' ? ' navbar-home-collapse' : ''}`} id="navbarNav">
           {/* Links — centered */}
           <ul className="navbar-nav mx-auto mb-2 mb-lg-0 d-flex align-items-center gap-1">
-            {navItems.map(item => (
+            {(lang === 'ar' ? [...navItems].reverse() : navItems).map(item => (
               <li className="nav-item" key={item.id}>
                 <button
                   onClick={() => navigate(item.id)}
@@ -379,6 +379,7 @@ function AssessmentPage() {
     personality: { thinking: '', social_type: '', learning: '' },
   });
   const [grade10Results, setGrade10Results] = useState(null);
+  const [expandedMajor, setExpandedMajor] = useState(null);
 
   const tawjihiFields = [
     { id: 'engineering',  label: lang === 'en' ? 'Engineering'              : 'الهندسي',                   icon: '⚙️',  bg: 'linear-gradient(135deg,#681a15,#9b2c24)' },
@@ -423,6 +424,10 @@ function AssessmentPage() {
   };
 
   const handleSubjectChange = (subject, value) => {
+    const subj = subjectList.find(s => s.key === subject);
+    const max = subj?.max || 200;
+    const num = parseFloat(value);
+    if (value !== '' && !isNaN(num) && num > max) return;
     setFormData({ ...formData, subjects: { ...formData.subjects, [subject]: value } });
   };
 
@@ -677,14 +682,15 @@ function AssessmentPage() {
     const allRecs = mlResults.recommendations || [];
     const studentGpa = parseFloat(gpa) || 0;
 
-    // Split into eligible and ineligible based on minimum admission score
-    const eligibleRecs = allRecs.filter(r => isEligible(r.major, studentGpa));
-    const ineligibleRecs = allRecs.filter(r => !isEligible(r.major, studentGpa));
+    // Filter by minimum score, take top 5 only
+    const eligibleRecs = allRecs.filter(r => isEligible(r.major, studentGpa)).slice(0, 5);
 
-    // Re-rank eligible recs starting from 1
-    const recs = eligibleRecs.map((r, i) => ({ ...r, displayRank: i + 1 }));
+    // Normalize scores rank-based: 97, 94, 91, 88, 85
+    const RANK_SCORES = [97, 94, 91, 88, 85];
+    const recs = eligibleRecs.map((r, i) => ({ ...r, displayRank: i + 1, displayScore: RANK_SCORES[i] ?? 85 }));
     const top = recs[0];
     const fieldLabel = tawjihiFields.find(f => f.id === selectedField)?.label || '';
+
     return (
       <div className="container py-5" style={{ maxWidth: '860px' }}>
         {/* Header */}
@@ -698,28 +704,26 @@ function AssessmentPage() {
           </p>
         </div>
 
-        {/* No eligible majors warning */}
+        {/* No eligible majors */}
         {recs.length === 0 && (
           <div className="alert alert-danger d-flex gap-3 align-items-start mb-4 rounded-4">
             <span style={{ fontSize: '1.5rem', flexShrink: 0 }}>🚫</span>
             <p className="mb-0" style={{ lineHeight: 1.9, fontSize: '14px' }}>
               {lang === 'en'
-                ? `Your GPA (${gpa}%) does not meet the minimum admission requirements for any major in this field. Consider exploring other fields or check parallel enrollment options.`
-                : `معدلك (${gpa}%) لا يصل إلى الحد الأدنى المطلوب لأي تخصص في هذا الحقل. جرب حقلاً آخر أو اطّلع على خيارات القبول الموازي.`}
+                ? `Your GPA (${gpa}%) does not meet the minimum for any major in this field. Try another field or check parallel enrollment options.`
+                : `معدلك (${gpa}%) لا يصل للحد الأدنى لأي تخصص في هذا الحقل. جرب حقلاً آخر أو اطّلع على خيارات القبول الموازي.`}
             </p>
           </div>
         )}
 
         {/* Top Pick */}
         {top && (
-          <div
-            className="mb-4 p-4 rounded-4 text-white text-center"
-            style={{ background: 'linear-gradient(135deg,#681a15,#9b2c24)', boxShadow: '0 8px 32px rgba(104,26,21,0.35)' }}
-          >
+          <div className="mb-4 p-4 rounded-4 text-white text-center"
+            style={{ background: 'linear-gradient(135deg,#681a15,#9b2c24)', boxShadow: '0 8px 32px rgba(104,26,21,0.35)' }}>
             <div style={{ fontSize: '2rem', marginBottom: '8px' }}>🥇</div>
             <h2 className="fw-bold mb-1" style={{ fontSize: 'clamp(1.4rem,3vw,2rem)' }}>{top.major}</h2>
             <span className="badge bg-white text-danger fw-bold px-3 py-2" style={{ fontSize: '14px' }}>
-              {t('result_match')} {top.confidence}%
+              {t('result_match')} {top.displayScore}%
             </span>
           </div>
         )}
@@ -744,83 +748,62 @@ function AssessmentPage() {
           </div>
         )}
 
-        {/* Eligible Recommendations */}
+        {/* Recommendations */}
         {recs.length > 0 && (
           <>
             <h5 className="fw-bold mb-3">{t('result_majors_list')}</h5>
-            <div className="d-flex flex-column gap-2 mb-4">
-              {recs.map(r => (
-                <div
-                  key={r.rank}
-                  className={`card border-0 shadow-sm ${darkMode ? 'bg-secondary text-white' : ''}`}
-                >
-                  <div className="card-body py-3 px-4">
-                    <div className="d-flex justify-content-between align-items-center mb-2">
-                      <div className="d-flex align-items-center gap-2">
-                        <span
-                          className="badge rounded-pill"
-                          style={{ background: r.displayRank === 1 ? '#681a15' : '#bbcae1', color: r.displayRank === 1 ? '#fff' : '#333', minWidth: '28px' }}
-                        >
-                          {r.displayRank}
-                        </span>
-                        <span className="fw-semibold" style={{ fontSize: '15px' }}>{r.major}</span>
-                      </div>
-                      <div className="d-flex align-items-center gap-2">
-                        {getMajorMinScore(r.major) !== null && (
-                          <span className={`badge ${darkMode ? 'bg-success' : 'bg-success'}`} style={{ fontSize: '11px' }}>
-                            {lang === 'en' ? `Min: ${getMajorMinScore(r.major)}%` : `الحد الأدنى: ${getMajorMinScore(r.major)}%`}
+            <div className="d-flex flex-column gap-2 mb-5">
+              {recs.map(r => {
+                const details = getMajorDetails(r.major);
+                const isExpanded = expandedMajor === r.major;
+                return (
+                  <div key={r.rank} className={`card border-0 shadow-sm ${darkMode ? 'bg-secondary text-white' : ''}`}>
+                    <div className="card-body py-3 px-4">
+                      <div className="d-flex justify-content-between align-items-center mb-2">
+                        <div className="d-flex align-items-center gap-2">
+                          <span className="badge rounded-pill"
+                            style={{ background: r.displayRank === 1 ? '#681a15' : '#bbcae1', color: r.displayRank === 1 ? '#fff' : '#333', minWidth: '28px' }}>
+                            {r.displayRank}
                           </span>
-                        )}
-                        <span className="text-danger fw-bold" style={{ fontSize: '14px' }}>{r.confidence}%</span>
+                          <span className="fw-semibold" style={{ fontSize: '15px' }}>{r.major}</span>
+                        </div>
+                        <span className="text-danger fw-bold" style={{ fontSize: '14px' }}>{r.displayScore}%</span>
                       </div>
-                    </div>
-                    <div className="progress" style={{ height: '6px' }}>
-                      <div
-                        className="progress-bar bg-danger"
-                        style={{ width: `${r.confidence}%`, transition: 'width 0.8s ease' }}
-                      />
+                      <div className="progress mb-3" style={{ height: '6px' }}>
+                        <div className="progress-bar bg-danger" style={{ width: `${r.displayScore}%`, transition: 'width 0.8s ease' }} />
+                      </div>
+                      {/* زر تعرف أكثر */}
+                      <button
+                        onClick={() => setExpandedMajor(isExpanded ? null : r.major)}
+                        className={`btn btn-sm fw-semibold ${darkMode ? 'btn-outline-light' : 'btn-outline-secondary'}`}
+                        style={{ borderRadius: '8px', fontSize: '12px' }}
+                      >
+                        {isExpanded ? '▲ ' : '▼ '}{lang === 'en' ? 'Learn more' : 'تعرف أكثر'}
+                      </button>
+                      {/* التفاصيل */}
+                      {isExpanded && (
+                        <div className="mt-3 p-3 rounded-3" style={{ background: darkMode ? 'rgba(0,0,0,0.2)' : '#f7f9ff', fontSize: '13.5px', lineHeight: 1.9 }}>
+                          {details?.desc && <p className="mb-2">📖 <strong>{lang === 'en' ? 'About:' : 'عن التخصص:'}</strong> {details.desc}</p>}
+                          {details?.expected && (
+                            <p className="mb-0">📊 <strong>{lang === 'en' ? 'Expected competitive score (avg 2021–2024):' : 'المعدل التنافسي المتوقع (متوسط 2021-2024):'}</strong>{' '}
+                              <span className="text-danger fw-bold">{details.expected}%</span>
+                            </p>
+                          )}
+                          {!details && <p className="mb-0 text-muted">{lang === 'en' ? 'No data available for this major.' : 'لا تتوفر بيانات لهذا التخصص حالياً.'}</p>}
+                        </div>
+                      )}
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </>
-        )}
-
-        {/* Ineligible Recommendations (below minimum) */}
-        {ineligibleRecs.length > 0 && (
-          <div className="mb-5">
-            <h6 className="fw-bold mb-3" style={{ color: '#999' }}>
-              {lang === 'en' ? 'Below minimum GPA (not eligible):' : 'تحت الحد الأدنى (لا تستوفي الشرط):'}
-            </h6>
-            <div className="d-flex flex-column gap-2">
-              {ineligibleRecs.map(r => (
-                <div
-                  key={r.rank}
-                  className="card border-0"
-                  style={{ opacity: 0.5, background: darkMode ? 'rgba(255,255,255,0.04)' : '#f5f5f5' }}
-                >
-                  <div className="card-body py-2 px-4">
-                    <div className="d-flex justify-content-between align-items-center">
-                      <div className="d-flex align-items-center gap-2">
-                        <span style={{ fontSize: '14px' }}>🚫</span>
-                        <span className="fw-semibold" style={{ fontSize: '14px', textDecoration: 'line-through', color: '#999' }}>{r.major}</span>
-                      </div>
-                      <span className="badge bg-danger bg-opacity-75" style={{ fontSize: '11px' }}>
-                        {lang === 'en' ? `Min: ${getMajorMinScore(r.major)}%` : `الحد الأدنى: ${getMajorMinScore(r.major)}%`}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
         )}
 
         {/* Actions */}
         <div className="d-flex gap-3 justify-content-center flex-wrap">
           <button
-            onClick={() => { setStep(0); setStudentType(null); setMlResults(null); setGpa(''); setSelectedField(null); setPersonality({ thinking_style: '', personality_type: '', preferred_study: '', preferred_work: '' }); }}
+            onClick={() => { setStep(0); setStudentType(null); setMlResults(null); setGpa(''); setSelectedField(null); setExpandedMajor(null); setPersonality({ thinking_style: '', personality_type: '', preferred_study: '', preferred_work: '' }); }}
             className={`btn btn-lg px-4 ${darkMode ? 'btn-outline-light' : 'btn-outline-secondary'}`}
           >
             {t('result_retake')}
@@ -1268,7 +1251,7 @@ function AssessmentPage() {
                   {studentType === 'tawjihi' && step === 4 && (
                     <button
                       onClick={handleTawjihiSubmit}
-                      disabled={mlLoading}
+                      disabled={mlLoading || !personality.thinking_style || !personality.personality_type || !personality.preferred_study || !personality.preferred_work}
                       className="btn btn-danger btn-lg px-5"
                     >
                       {mlLoading ? (
@@ -1281,7 +1264,11 @@ function AssessmentPage() {
                   )}
 
                   {studentType === 'grade10' && step < getTotalSteps() && (
-                    <button onClick={() => setStep(step + 1)} className="btn btn-danger btn-lg px-4">
+                    <button
+                      onClick={() => setStep(step + 1)}
+                      disabled={step === 3 && (!formData.personality.thinking || !formData.personality.social_type || !formData.personality.learning)}
+                      className="btn btn-danger btn-lg px-4"
+                    >
                       {t('btn_next')}
                     </button>
                   )}

@@ -91,9 +91,9 @@ def ml_recommend(request):
                 "معدلك الحالي لا يؤهلك لتخصصات هذا الحقل في معظم الجامعات الأردنية. "
                 "إليك أفضل التخصصات المتاحة بناءً على معدلك واهتماماتك."
             )
-            recommendations = gpa_filtered[:10]
+            recommendations = gpa_filtered[:5]
         else:
-            recommendations = field_filtered[:10]
+            recommendations = field_filtered[:5]
 
     except Exception as e:
         return JsonResponse({"error": f"خطأ في التنبؤ: {str(e)}"}, status=500)

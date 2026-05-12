@@ -1,8 +1,8 @@
 /* ===================================================
-   MOBILE FIXES — does NOT touch desktop (≥ 576px)
+   MOBILE — Professional responsive styles
    =================================================== */
 
-/* ── Split screen: stack vertically on small screens ── */
+/* ── Split screen: stack vertically on mobile ── */
 @media (max-width: 575.98px) {
   .split-screen-wrapper {
     flex-direction: column !important;
@@ -11,41 +11,37 @@
   }
   .split-screen-side {
     flex: 1 1 auto !important;
-    min-height: 46vh !important;
+    min-height: 44vh !important;
     width: 100% !important;
   }
-  .split-divider {
-    display: none !important;
-  }
+  .split-divider { display: none !important; }
 }
 
-/* ── Hero content: less side padding on mobile ── */
+/* ── Hero content ── */
 @media (max-width: 575.98px) {
   .hero-content-inner {
     padding: 0 20px !important;
     width: 100% !important;
     max-width: 100% !important;
   }
-  .hero-content-inner h1 {
-    font-size: clamp(24px, 7vw, 40px) !important;
-  }
-  .hero-content-inner p {
-    font-size: 15px !important;
-  }
+  .hero-content-inner h1 { font-size: clamp(22px, 6.5vw, 38px) !important; }
+  .hero-content-inner p  { font-size: 14px !important; }
 }
 
-/* ── Navbar collapse: dark background on mobile (home page) ── */
+/* ── Navbar collapse on home page ── */
 @media (max-width: 991.98px) {
   .navbar-collapse.navbar-home-collapse {
-    background: rgba(6, 13, 31, 0.95);
+    background: rgba(6, 13, 31, 0.97);
     border-radius: 14px;
     padding: 10px 12px;
     margin-top: 8px;
     backdrop-filter: blur(12px);
+    max-height: 80vh;
+    overflow-y: auto;
   }
 }
 
-/* ── Chatbot: flex layout so body stretches ── */
+/* ── Chatbot flex layout ── */
 .chat-window {
   display: flex !important;
   flex-direction: column !important;
@@ -57,7 +53,7 @@
   overflow-y: auto !important;
 }
 
-/* ── Assessment personality options: no indent on mobile ── */
+/* ── Assessment personality options ── */
 @media (max-width: 575.98px) {
   .options-row {
     padding-right: 0 !important;
@@ -65,30 +61,111 @@
   }
 }
 
-/* ── General touch friendliness ── */
+/* ── Global mobile layout ── */
 @media (max-width: 575.98px) {
-  /* Bigger tap targets for interest buttons */
-  .interest-btn {
-    width: 38px !important;
-    height: 38px !important;
+
+  /* Container tighter */
+  .container, .container-fluid {
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+  }
+
+  /* Assessment card */
+  .card-body.p-4, .card-body.p-4.p-md-5 {
+    padding: 18px !important;
+  }
+
+  /* Navigation buttons — smaller and cleaner */
+  .d-flex.justify-content-between.mt-5 {
+    margin-top: 24px !important;
+    gap: 10px !important;
+  }
+  .d-flex.justify-content-between.mt-5 .btn {
     font-size: 14px !important;
+    padding: 10px 18px !important;
+    border-radius: 10px !important;
+    flex: 1 !important;
+    max-width: 48% !important;
   }
 
-  /* Container padding tighter on mobile */
-  .container {
-    padding-left: 16px !important;
-    padding-right: 16px !important;
+  /* Progress bar text */
+  small.fw-semibold { font-size: 12px !important; }
+
+  /* Interest buttons */
+  .interest-btn {
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 13px !important;
   }
 
-  /* Assessment card padding */
-  .card-body.p-4 {
-    padding: 20px !important;
+  /* Personality option buttons */
+  .options-row .btn, .options-row button {
+    font-size: 13px !important;
+    padding: 9px 14px !important;
+    border-radius: 10px !important;
   }
 
-  /* Footer bottom bar: center on mobile */
+  /* Results cards */
+  .card-body.py-3.px-4 {
+    padding: 14px 16px !important;
+  }
+
+  /* University cards image height */
+  .card .card-body + div,
+  div[style*="190px"] {
+    height: 150px !important;
+  }
+
+  /* Footer */
   .footer-bottom {
     flex-direction: column !important;
     text-align: center !important;
     gap: 6px !important;
+  }
+
+  /* Hero buttons */
+  .hero-content-inner .btn {
+    font-size: 14px !important;
+    padding: 12px 24px !important;
+  }
+
+  /* About page team cards */
+  div[style*="360px"] {
+    max-width: 100% !important;
+  }
+
+  /* Section padding */
+  section { padding: 40px 0 !important; }
+
+  /* Stats grid */
+  div[style*="gridTemplateColumns: 'repeat(auto-fit,minmax(160px"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Fields grid */
+  div[style*="gridTemplateColumns: 'repeat(auto-fit,minmax(180px"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+
+  /* Steps grid */
+  div[style*="gridTemplateColumns: 'repeat(auto-fit,minmax(220px"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Chatbot window on mobile: full width bottom sheet */
+  .chat-window {
+    border-radius: 20px 20px 0 0 !important;
+  }
+}
+
+/* ── Tablet (576–991px) ── */
+@media (min-width: 576px) and (max-width: 991.98px) {
+  .d-flex.justify-content-between.mt-5 .btn {
+    font-size: 14px !important;
+    padding: 10px 20px !important;
+  }
+  .hero-content-inner {
+    padding: 0 32px !important;
   }
 }
