@@ -101,11 +101,13 @@ def ml_recommend(request):
     ai_explanation = ""
     try:
         top3   = recommendations[:3]
+        field_label = data.get('field', '')
         prompt = (
-            f"الطالب حصل على معدل توجيهي: {data['gpa']}%\n"
-            "نظام الذكاء الاصطناعي أوصى بهذه التخصصات:\n"
-            + "\n".join(f"  {r['rank']}. {r['major']} - ثقة {r['confidence']}%" for r in top3)
-            + "\n\nاكتب تعليقاً تشجيعياً مبسطاً (3 جمل فقط) يشرح لماذا هذه التخصصات مناسبة، مع نصيحة عملية واحدة."
+            f"الطالب حصل على معدل توجيهي: {data['gpa']}%، واهتمامه في حقل: {field_label}\n"
+            "النظام أوصى بهذه التخصصات الجامعية:\n"
+            + "\n".join(f"  {r['rank']}. {r['major']}" for r in top3)
+            + "\n\nاكتب تعليقاً تشجيعياً مبسطاً (3 جمل فقط) يشرح لماذا هذه التخصصات مناسبة لهذا الطالب بناءً على اهتماماته وحقله، مع نصيحة عملية واحدة."
+            + "\n\nتعليمات مهمة: اكتب بالعربية فقط. لا تذكر كلمة 'علمي' أو 'أدبي' أو 'مهني' أبداً. ركّز على التخصصات وسوق العمل فقط."
         )
         ai_explanation = _groq_chat([{"role": "user", "content": prompt}], max_tokens=300)
     except Exception:
@@ -175,6 +177,36 @@ def chat(request):
         return JsonResponse({"reply": reply})
     except Exception:
         return JsonResponse({"error": "حدث خطأ غير متوقع."}, status=500)
+
+
+@csrf_exempt
+@require_POST
+def major_info(request):
+    """يرجع وصفاً مختصراً لأي تخصص من الـ AI"""
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({"error": "بيانات غير صالحة"}, status=400)
+
+    major_name = data.get("major", "").strip()
+    if not major_name:
+        return JsonResponse({"error": "اسم التخصص مطلوب"}, status=400)
+
+    # ابحث في قاعدة البيانات أولاً
+    from .rag import build_context
+    db_context = build_context(major_name)
+
+    prompt = (
+        f"أعطني معلومات مفيدة عن تخصص '{major_name}' في الجامعات الأردنية.\n"
+        + (f"معلومات من قاعدة البيانات:\n{db_context}\n\n" if db_context else "")
+        + "اكتب وصفاً مختصراً يشمل: ماذا يدرس الطالب، فرص العمل، والمهارات المطلوبة. "
+        + "3 جمل فقط. بالعربية فقط."
+    )
+    try:
+        desc = _groq_chat([{"role": "user", "content": prompt}], max_tokens=200)
+        return JsonResponse({"desc": desc})
+    except Exception:
+        return JsonResponse({"error": "تعذّر الحصول على المعلومات."}, status=500)
 
 
 @require_GET

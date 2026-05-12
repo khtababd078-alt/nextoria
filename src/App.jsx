@@ -380,6 +380,8 @@ function AssessmentPage() {
   });
   const [grade10Results, setGrade10Results] = useState(null);
   const [expandedMajor, setExpandedMajor] = useState(null);
+  const [majorApiDesc, setMajorApiDesc] = useState({});
+  const [majorApiLoading, setMajorApiLoading] = useState({});
 
   const tawjihiFields = [
     { id: 'engineering',  label: lang === 'en' ? 'Engineering'              : 'الهندسي',                   icon: '⚙️',  bg: 'linear-gradient(135deg,#681a15,#9b2c24)' },
@@ -774,7 +776,25 @@ function AssessmentPage() {
                       </div>
                       {/* زر تعرف أكثر */}
                       <button
-                        onClick={() => setExpandedMajor(isExpanded ? null : r.major)}
+                        onClick={async () => {
+                          const opening = isExpanded ? null : r.major;
+                          setExpandedMajor(opening);
+                          // لو ما في داتا محلية وما جبنا من API بعد
+                          if (opening && !details && !majorApiDesc[r.major] && !majorApiLoading[r.major]) {
+                            setMajorApiLoading(prev => ({ ...prev, [r.major]: true }));
+                            try {
+                              const res = await fetch(`${API_BASE}/api/ai/major-info/`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ major: r.major }),
+                              });
+                              const data = await res.json();
+                              if (data.desc) setMajorApiDesc(prev => ({ ...prev, [r.major]: data.desc }));
+                            } catch { /* silent */ } finally {
+                              setMajorApiLoading(prev => ({ ...prev, [r.major]: false }));
+                            }
+                          }
+                        }}
                         className={`btn btn-sm fw-semibold ${darkMode ? 'btn-outline-light' : 'btn-outline-secondary'}`}
                         style={{ borderRadius: '8px', fontSize: '12px' }}
                       >
@@ -783,13 +803,22 @@ function AssessmentPage() {
                       {/* التفاصيل */}
                       {isExpanded && (
                         <div className="mt-3 p-3 rounded-3" style={{ background: darkMode ? 'rgba(0,0,0,0.2)' : '#f7f9ff', fontSize: '13.5px', lineHeight: 1.9 }}>
-                          {details?.desc && <p className="mb-2">📖 <strong>{lang === 'en' ? 'About:' : 'عن التخصص:'}</strong> {details.desc}</p>}
+                          {majorApiLoading[r.major] && (
+                            <div className="d-flex align-items-center gap-2 text-muted">
+                              <span className="spinner-border spinner-border-sm" />
+                              <span>{lang === 'en' ? 'Loading...' : 'جاري التحميل...'}</span>
+                            </div>
+                          )}
+                          {(details?.desc || majorApiDesc[r.major]) && (
+                            <p className="mb-2">📖 <strong>{lang === 'en' ? 'About:' : 'عن التخصص:'}</strong>{' '}
+                              {details?.desc || majorApiDesc[r.major]}
+                            </p>
+                          )}
                           {details?.expected && (
                             <p className="mb-0">📊 <strong>{lang === 'en' ? 'Expected competitive score (avg 2021–2024):' : 'المعدل التنافسي المتوقع (متوسط 2021-2024):'}</strong>{' '}
                               <span className="text-danger fw-bold">{details.expected}%</span>
                             </p>
                           )}
-                          {!details && <p className="mb-0 text-muted">{lang === 'en' ? 'No data available for this major.' : 'لا تتوفر بيانات لهذا التخصص حالياً.'}</p>}
                         </div>
                       )}
                     </div>
