@@ -1,3 +1,7 @@
+# Python cache
+__pycache__/
+*.pyc
+
 # ML model large files
 backend/ai/ml_model/*.pkl
 backend/.env
