@@ -1804,18 +1804,6 @@ function AboutPage() {
         </div>
       </section>
 
-      {/* Tech Stack */}
-      <section style={{ padding: '60px 0' }}>
-        <div className="container text-center">
-          <h2 style={{ fontWeight: 900, fontSize: 'clamp(1.4rem,3vw,2rem)', marginBottom: '10px' }}>{t('tech_title')}</h2>
-          <p style={{ color: sub, marginBottom: '32px' }}>{t('tech_sub')}</p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'center' }}>
-            {stack.map((t, i) => (
-              <span key={i} style={{ background: darkMode ? 'rgba(255,255,255,0.07)' : '#f0f4ff', border: `1.5px solid ${border}`, borderRadius: '50px', padding: '8px 22px', fontSize: '14px', fontWeight: 600 }}>{t}</span>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* Creator */}
       <section style={{ padding: '60px 0', background: darkMode ? 'rgba(255,255,255,0.02)' : '#f7f9ff' }}>
