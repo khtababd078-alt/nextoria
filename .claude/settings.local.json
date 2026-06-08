@@ -1,7 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\user\\\\ai-major-recommenderr\" -Depth 2 -Exclude node_modules | Select-Object -Property Name, FullName, @{Name=\"Type\"; Expression={if\\($_.PSIsContainer\\) {\"Dir\"} else {\"File\"}}} | Format-Table -AutoSize)"
-    ]
-  }
-}

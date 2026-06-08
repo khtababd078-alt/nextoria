@@ -450,7 +450,7 @@ const translations = {
     footer_unis: 'Featured Universities',
     footer_contact: 'Contact Us',
     footer_copy: '© 2025 Nextoria — All Rights Reserved',
-    footer_made: 'Made with ❤️ in Jordan 🇯🇴',
+    footer_made: 'Made with ❤️ in Jordan',
 
     // Chatbot
     chat_greeting: 'Hi! I\'m Nashmi, your virtual assistant. How can I help you today?',

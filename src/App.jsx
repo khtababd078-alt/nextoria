@@ -3,7 +3,16 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import translations from './translations';
 import './mobile.css';
-import { isEligible, getMajorDetails } from './majorData';
+import { isEligible, getMajorDetails, isMajorInField, getMajorUniversities, getFieldFallbackMajors } from './majorData';
+
+function cleanArabicText(text) {
+  if (!text) return '';
+  return text
+    .replace(/[^؀-ۿݐ-ݿﭐ-﷿ﹰ-﻿\s\d.,!?؟،؛:()%\-–'"«»\n]+/g, ' ')
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
 
 const AppContext = createContext();
 
@@ -18,6 +27,7 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState('home');
   const [pageVisible, setPageVisible] = useState(true);
   const [lang, setLang] = useState('ar');
+  const [highlightedUni, setHighlightedUni] = useState(null);
 
   const navigate = (page) => {
     setPageVisible(false);
@@ -38,6 +48,8 @@ export default function App() {
     lang,
     setLang,
     t,
+    highlightedUni,
+    setHighlightedUni,
   };
 
   return (
@@ -375,7 +387,7 @@ function recommendField(subjects, interests, personality, lang = 'ar') {
 }
 
 function AssessmentPage() {
-  const { darkMode, navigate, t, lang } = useAppContext();
+  const { darkMode, navigate, t, lang, setHighlightedUni } = useAppContext();
   const [step, setStep] = useState(0);
   const [studentType, setStudentType] = useState(null);
   const [hoveredSide, setHoveredSide] = useState(null);
@@ -396,9 +408,34 @@ function AssessmentPage() {
     personality: { thinking: '', social_type: '', learning: '' },
   });
   const [grade10Results, setGrade10Results] = useState(null);
-  const [expandedMajor, setExpandedMajor] = useState(null);
   const [majorApiDesc, setMajorApiDesc] = useState({});
   const [majorApiLoading, setMajorApiLoading] = useState({});
+  const fetchedMajors = React.useRef(new Set());
+
+  // Auto-fetch descriptions for majors missing from local data when results show
+  React.useEffect(() => {
+    if (step !== 5 || !mlResults) return;
+    const allRecs = mlResults.recommendations || [];
+    const fieldFiltered = allRecs.filter(r => isMajorInField(r.major, selectedField));
+    const toShow = (fieldFiltered.length >= 1 ? fieldFiltered : allRecs)
+      .filter(r => isEligible(r.major, parseFloat(gpa) || 0))
+      .slice(0, 3);
+    toShow.forEach(r => {
+      if (getMajorDetails(r.major)) return;
+      if (fetchedMajors.current.has(r.major)) return;
+      fetchedMajors.current.add(r.major);
+      setMajorApiLoading(prev => ({ ...prev, [r.major]: true }));
+      fetch(`${API_BASE}/api/ai/major-info/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ major: r.major }),
+      })
+        .then(res => res.json())
+        .then(data => { if (data.desc) setMajorApiDesc(prev => ({ ...prev, [r.major]: data.desc })); })
+        .catch(() => {})
+        .finally(() => setMajorApiLoading(prev => ({ ...prev, [r.major]: false })));
+    });
+  }, [step, mlResults, selectedField, gpa]);
 
   const tawjihiFields = [
     { id: 'engineering',  label: lang === 'en' ? 'Engineering'              : 'الهندسي',                   icon: '⚙️',  bg: 'linear-gradient(135deg,#681a15,#9b2c24)' },
@@ -474,6 +511,7 @@ function AssessmentPage() {
           personality_type:  personality.personality_type,
           preferred_study:   personality.preferred_study,
           preferred_work:    personality.preferred_work,
+          language:          'ar',
         }),
       });
       const data = await res.json();
@@ -700,54 +738,94 @@ function AssessmentPage() {
   if (step === 5 && studentType === 'tawjihi' && mlResults) {
     const allRecs = mlResults.recommendations || [];
     const studentGpa = parseFloat(gpa) || 0;
-
-    // Filter by minimum score, take top 5 only
-    const eligibleRecs = allRecs.filter(r => isEligible(r.major, studentGpa)).slice(0, 5);
-
-    // Normalize scores rank-based: 97, 94, 91, 88, 85
-    const RANK_SCORES = [97, 94, 91, 88, 85];
-    const recs = eligibleRecs.map((r, i) => ({ ...r, displayRank: i + 1, displayScore: RANK_SCORES[i] ?? 85 }));
-    const top = recs[0];
     const fieldLabel = tawjihiFields.find(f => f.id === selectedField)?.label || '';
 
+    // Filter by field + eligibility from API results
+    const COMP_TOLERANCE = 7; // max expected GPA above student's before we exclude
+    const compScore = (expected) => {
+      const fit = studentGpa - (expected ?? studentGpa);
+      return fit >= 0 ? fit : 1000 + (-fit);
+    };
+
+    const fieldFiltered = allRecs.filter(r => isMajorInField(r.major, selectedField));
+    const fromApi = (fieldFiltered.length >= 1 ? fieldFiltered : allRecs)
+      .filter(r => {
+        if (!isEligible(r.major, studentGpa)) return false;
+        const det = getMajorDetails(r.major);
+        if (det?.expected && det.expected > studentGpa + COMP_TOLERANCE) return false;
+        return true;
+      })
+      .sort((a, b) => {
+        const expA = getMajorDetails(a.major)?.expected;
+        const expB = getMajorDetails(b.major)?.expected;
+        return compScore(expA) - compScore(expB);
+      })
+      .slice(0, 3);
+
+    // Pad to 3 with local fallbacks when API returns fewer field-matching majors
+    const eligibleRecsArr = [...fromApi];
+    if (eligibleRecsArr.length < 3) {
+      const shownNames = eligibleRecsArr.map(r => r.major);
+      const fallbacks = getFieldFallbackMajors(selectedField, studentGpa, shownNames);
+      for (const name of fallbacks) {
+        eligibleRecsArr.push({ major: name, match_score: null });
+        if (eligibleRecsArr.length >= 3) break;
+      }
+    }
+
+    const RANK_SCORES = [97, 94, 91];
+    const recs = eligibleRecsArr.map((r, i) => ({ ...r, displayRank: i + 1, displayScore: RANK_SCORES[i] ?? 91 }));
+
+    // Local summary based on actual shown majors (replaces misleading backend AI text)
+    const localSummary = recs.length > 0
+      ? `بناءً على معدلك ${gpa}% واختيارك للحقل ${fieldLabel}، إليك أفضل 3 تخصصات تتناسب مع مستواك: ${recs.map(r => r.major).join('، ')}. هذه التخصصات متوفرة في جامعات أردنية معتمدة وتفتح آفاقاً مهنية واسعة.`
+      : '';
+
     return (
-      <div className="container py-5" style={{ maxWidth: '860px' }}>
-        {/* Header */}
+      <div className="container py-5" style={{ maxWidth: '820px' }}>
+
+        {/* ── Header ── */}
         <div className="text-center mb-5">
           <div style={{ fontSize: '3.5rem', marginBottom: '12px' }}>🏆</div>
           <h1 className="fw-bold mb-2" style={{ fontSize: 'clamp(1.6rem,3vw,2.2rem)' }}>
-            {t('result_majors_title')}
+            أفضل التخصصات المقترحة لك
           </h1>
-          <p className={darkMode ? 'text-secondary' : 'text-muted'}>
-            {lang === 'en' ? <>Based on <strong>{fieldLabel}</strong> field and GPA <strong>{gpa}%</strong></> : <>بناءً على حقل <strong>{fieldLabel}</strong> ومعدل <strong>{gpa}%</strong></>}
+          <p className={darkMode ? 'text-secondary' : 'text-muted'} style={{ fontSize: '15px' }}>
+            بناءً على حقل <strong>{fieldLabel}</strong> ومعدل <strong>{gpa}%</strong>
           </p>
         </div>
 
-        {/* No eligible majors */}
+        {/* ── No eligible majors ── */}
         {recs.length === 0 && (
           <div className="alert alert-danger d-flex gap-3 align-items-start mb-4 rounded-4">
             <span style={{ fontSize: '1.5rem', flexShrink: 0 }}>🚫</span>
             <p className="mb-0" style={{ lineHeight: 1.9, fontSize: '14px' }}>
-              {lang === 'en'
-                ? `Your GPA (${gpa}%) does not meet the minimum for any major in this field. Try another field or check parallel enrollment options.`
-                : `معدلك (${gpa}%) لا يصل للحد الأدنى لأي تخصص في هذا الحقل. جرب حقلاً آخر أو اطّلع على خيارات القبول الموازي.`}
+              {`معدلك (${gpa}%) لا يصل للحد الأدنى لأي تخصص في هذا الحقل. جرب حقلاً آخر أو اطّلع على خيارات القبول الموازي.`}
             </p>
           </div>
         )}
 
-        {/* Top Pick */}
-        {top && (
-          <div className="mb-4 p-4 rounded-4 text-white text-center"
-            style={{ background: 'linear-gradient(135deg,#681a15,#9b2c24)', boxShadow: '0 8px 32px rgba(104,26,21,0.35)' }}>
-            <div style={{ fontSize: '2rem', marginBottom: '8px' }}>🥇</div>
-            <h2 className="fw-bold mb-1" style={{ fontSize: 'clamp(1.4rem,3vw,2rem)' }}>{top.major}</h2>
-            <span className="badge bg-white text-danger fw-bold px-3 py-2" style={{ fontSize: '14px' }}>
-              {t('result_match')} {top.displayScore}%
-            </span>
+        {/* ── Summary ── */}
+        {localSummary && (
+          <div style={{
+            background: darkMode ? 'rgba(255,255,255,0.04)' : '#fff',
+            border: `1px solid ${darkMode ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)'}`,
+            borderRadius: '16px', padding: '18px 20px', marginBottom: '20px',
+            display: 'flex', gap: '14px', alignItems: 'flex-start',
+          }}>
+            <div style={{
+              width: '42px', height: '42px', borderRadius: '12px', flexShrink: 0,
+              background: 'linear-gradient(135deg,#681a15,#9b2c24)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem',
+            }}>🤖</div>
+            <p style={{
+              margin: 0, lineHeight: 1.9, fontSize: '14px',
+              direction: 'rtl', color: darkMode ? 'rgba(255,255,255,0.82)' : '#444',
+            }}>{localSummary}</p>
           </div>
         )}
 
-        {/* GPA Warning */}
+        {/* ── GPA Warning ── */}
         {mlResults.gpa_warning && (
           <div className="alert alert-warning d-flex gap-3 align-items-start mb-4 rounded-4">
             <span style={{ fontSize: '1.5rem', flexShrink: 0 }}>⚠️</span>
@@ -755,101 +833,149 @@ function AssessmentPage() {
           </div>
         )}
 
-        {/* AI Explanation */}
-        {mlResults.ai_explanation && (
-          <div className={`card border-0 shadow-sm mb-4 ${darkMode ? 'bg-secondary text-white' : 'bg-light'}`}>
-            <div className="card-body p-4">
-              <div className="d-flex gap-3 align-items-start">
-                <span style={{ fontSize: '1.8rem', flexShrink: 0 }}>🤖</span>
-                <p className="mb-0" style={{ lineHeight: 2, fontSize: '15px' }}>{mlResults.ai_explanation}</p>
-              </div>
-            </div>
+        {/* ── 3 Major Cards ── */}
+        {recs.length > 0 && (
+          <div className="d-flex flex-column mb-5" style={{ gap: '16px' }}>
+            {recs.map(r => {
+              const details = getMajorDetails(r.major);
+              const unis = getMajorUniversities(r.major, selectedField);
+              const desc = details?.desc || majorApiDesc[r.major];
+              const rankColors = ['#c0392b', '#7c3aed', '#1565c0'];
+              const rankGradients = [
+                'linear-gradient(90deg,#7f1d1d,#c0392b,#e74c3c)',
+                'linear-gradient(90deg,#4c1d95,#7c3aed,#a78bfa)',
+                'linear-gradient(90deg,#0d2b6b,#1565c0,#42a5f5)',
+              ];
+              const rankColor = rankColors[r.displayRank - 1] || '#555';
+              const rankGradient = rankGradients[r.displayRank - 1] || rankGradients[2];
+
+              return (
+                <div key={r.major}
+                  style={{
+                    borderRadius: '20px', overflow: 'hidden',
+                    background: darkMode ? 'rgba(255,255,255,0.04)' : '#fff',
+                    border: `1px solid ${darkMode ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)'}`,
+                    boxShadow: darkMode ? '0 4px 28px rgba(0,0,0,0.35)' : '0 4px 24px rgba(0,0,0,0.07)',
+                    transition: 'transform 0.22s, box-shadow 0.22s',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = darkMode ? '0 10px 40px rgba(0,0,0,0.45)' : '0 10px 36px rgba(0,0,0,0.13)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = darkMode ? '0 4px 28px rgba(0,0,0,0.35)' : '0 4px 24px rgba(0,0,0,0.07)'; }}
+                >
+                  {/* Top accent stripe */}
+                  <div style={{ height: '4px', background: rankGradient }} />
+
+                  {/* Header */}
+                  <div style={{
+                    padding: '16px 20px 14px',
+                    display: 'flex', alignItems: 'center', gap: '12px',
+                    borderBottom: `1px solid ${darkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'}`,
+                  }}>
+                    <div style={{
+                      width: '38px', height: '38px', borderRadius: '10px', flexShrink: 0,
+                      background: rankGradient, color: '#fff', fontWeight: 900, fontSize: '16px',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      boxShadow: `0 4px 12px ${rankColor}44`,
+                    }}>{r.displayRank}</div>
+
+                    <span style={{
+                      flex: 1, fontWeight: 800, fontSize: 'clamp(15px,2.2vw,17px)',
+                      color: darkMode ? '#f1f5f9' : '#1a1a2e',
+                      direction: 'rtl', textAlign: 'right', letterSpacing: '-0.2px',
+                    }}>{r.major}</span>
+
+                    <div style={{
+                      flexShrink: 0, background: `${rankColor}18`,
+                      border: `1.5px solid ${rankColor}50`,
+                      borderRadius: '10px', padding: '6px 12px',
+                      textAlign: 'center', minWidth: '58px',
+                    }}>
+                      <div style={{ fontSize: '17px', fontWeight: 900, color: rankColor, lineHeight: 1 }}>{r.displayScore}%</div>
+                      <div style={{ fontSize: '9.5px', color: darkMode ? '#aaa' : '#999', marginTop: '2px' }}>تطابق</div>
+                    </div>
+                  </div>
+
+                  {/* Body */}
+                  <div style={{ padding: '16px 20px 20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+
+                    {/* Description */}
+                    {(desc || majorApiLoading[r.major]) && (
+                      <p style={{
+                        margin: 0, fontSize: '14px', lineHeight: 1.85,
+                        color: darkMode ? 'rgba(255,255,255,0.68)' : '#555',
+                        direction: 'rtl',
+                        display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                      }}>
+                        {majorApiLoading[r.major]
+                          ? <span className="d-flex align-items-center gap-2 text-secondary"><span className="spinner-border spinner-border-sm" /><span style={{ fontSize: '13px' }}>جاري التحميل...</span></span>
+                          : desc}
+                      </p>
+                    )}
+
+                    {/* GPA stat */}
+                    {details?.expected && (
+                      <div style={{
+                        display: 'flex', alignItems: 'center', gap: '14px',
+                        background: darkMode ? 'rgba(255,255,255,0.04)' : '#f7f8fc',
+                        borderRadius: '14px', padding: '14px 16px',
+                        border: `1px solid ${darkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'}`,
+                      }}>
+                        <div style={{ flexShrink: 0 }}>
+                          <div style={{ fontSize: '11px', color: darkMode ? 'rgba(255,255,255,0.4)' : '#bbb', marginBottom: '4px', direction: 'rtl' }}>
+                            المعدل التنافسي المتوقع (2021–2024)
+                          </div>
+                          <div style={{ fontSize: '28px', fontWeight: 900, color: rankColor, lineHeight: 1 }}>
+                            {details.expected}%
+                          </div>
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ height: '8px', background: darkMode ? 'rgba(255,255,255,0.08)' : '#e8eaf0', borderRadius: '4px', overflow: 'hidden' }}>
+                            <div style={{
+                              height: '100%', width: `${Math.min(details.expected, 100)}%`,
+                              background: rankGradient, borderRadius: '4px', transition: 'width 1.2s ease',
+                            }} />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Universities */}
+                    {unis.length > 0 && (
+                      <div>
+                        <div style={{ fontSize: '11.5px', color: darkMode ? 'rgba(255,255,255,0.38)' : '#bbb', marginBottom: '8px', direction: 'rtl' }}>
+                          🏛 جامعات تقدم هذا التخصص
+                        </div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                          {unis.map(uni => (
+                            <button
+                              key={uni}
+                              onClick={() => { setHighlightedUni(uni); navigate('universities'); }}
+                              style={{
+                                background: darkMode ? 'rgba(255,255,255,0.06)' : '#f0f2f8',
+                                border: `1px solid ${darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.07)'}`,
+                                borderRadius: '8px', padding: '7px 15px',
+                                fontSize: '12.5px', fontWeight: 600,
+                                color: darkMode ? '#c8d6f0' : '#2c3e6b',
+                                cursor: 'pointer', transition: 'all 0.18s',
+                              }}
+                              onMouseEnter={e => { e.currentTarget.style.background = rankColor; e.currentTarget.style.color = '#fff'; e.currentTarget.style.borderColor = rankColor; }}
+                              onMouseLeave={e => { e.currentTarget.style.background = darkMode ? 'rgba(255,255,255,0.06)' : '#f0f2f8'; e.currentTarget.style.color = darkMode ? '#c8d6f0' : '#2c3e6b'; e.currentTarget.style.borderColor = darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.07)'; }}
+                            >{uni}</button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
 
-        {/* Recommendations */}
-        {recs.length > 0 && (
-          <>
-            <h5 className="fw-bold mb-3">{t('result_majors_list')}</h5>
-            <div className="d-flex flex-column gap-2 mb-5">
-              {recs.map(r => {
-                const details = getMajorDetails(r.major);
-                const isExpanded = expandedMajor === r.major;
-                return (
-                  <div key={r.rank} className={`card border-0 shadow-sm ${darkMode ? 'bg-secondary text-white' : ''}`}>
-                    <div className="card-body py-3 px-4">
-                      <div className="d-flex justify-content-between align-items-center mb-2">
-                        <div className="d-flex align-items-center gap-2">
-                          <span className="badge rounded-pill"
-                            style={{ background: r.displayRank === 1 ? '#681a15' : '#bbcae1', color: r.displayRank === 1 ? '#fff' : '#333', minWidth: '28px' }}>
-                            {r.displayRank}
-                          </span>
-                          <span className="fw-semibold" style={{ fontSize: '15px' }}>{r.major}</span>
-                        </div>
-                        <span className="text-danger fw-bold" style={{ fontSize: '14px' }}>{r.displayScore}%</span>
-                      </div>
-                      <div className="progress mb-3" style={{ height: '6px' }}>
-                        <div className="progress-bar bg-danger" style={{ width: `${r.displayScore}%`, transition: 'width 0.8s ease' }} />
-                      </div>
-                      {/* زر تعرف أكثر */}
-                      <button
-                        onClick={async () => {
-                          const opening = isExpanded ? null : r.major;
-                          setExpandedMajor(opening);
-                          // لو ما في داتا محلية وما جبنا من API بعد
-                          if (opening && !details && !majorApiDesc[r.major] && !majorApiLoading[r.major]) {
-                            setMajorApiLoading(prev => ({ ...prev, [r.major]: true }));
-                            try {
-                              const res = await fetch(`${API_BASE}/api/ai/major-info/`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ major: r.major }),
-                              });
-                              const data = await res.json();
-                              if (data.desc) setMajorApiDesc(prev => ({ ...prev, [r.major]: data.desc }));
-                            } catch { /* silent */ } finally {
-                              setMajorApiLoading(prev => ({ ...prev, [r.major]: false }));
-                            }
-                          }
-                        }}
-                        className={`btn btn-sm fw-semibold ${darkMode ? 'btn-outline-light' : 'btn-outline-secondary'}`}
-                        style={{ borderRadius: '8px', fontSize: '12px' }}
-                      >
-                        {isExpanded ? '▲ ' : '▼ '}{lang === 'en' ? 'Learn more' : 'تعرف أكثر'}
-                      </button>
-                      {/* التفاصيل */}
-                      {isExpanded && (
-                        <div className="mt-3 p-3 rounded-3" style={{ background: darkMode ? 'rgba(0,0,0,0.2)' : '#f7f9ff', fontSize: '13.5px', lineHeight: 1.9 }}>
-                          {majorApiLoading[r.major] && (
-                            <div className="d-flex align-items-center gap-2 text-muted">
-                              <span className="spinner-border spinner-border-sm" />
-                              <span>{lang === 'en' ? 'Loading...' : 'جاري التحميل...'}</span>
-                            </div>
-                          )}
-                          {(details?.desc || majorApiDesc[r.major]) && (
-                            <p className="mb-2">📖 <strong>{lang === 'en' ? 'About:' : 'عن التخصص:'}</strong>{' '}
-                              {details?.desc || majorApiDesc[r.major]}
-                            </p>
-                          )}
-                          {details?.expected && (
-                            <p className="mb-0">📊 <strong>{lang === 'en' ? 'Expected competitive score (avg 2021–2024):' : 'المعدل التنافسي المتوقع (متوسط 2021-2024):'}</strong>{' '}
-                              <span className="text-danger fw-bold">{details.expected}%</span>
-                            </p>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </>
-        )}
-
-        {/* Actions */}
+        {/* ── Actions ── */}
         <div className="d-flex gap-3 justify-content-center flex-wrap">
           <button
-            onClick={() => { setStep(0); setStudentType(null); setMlResults(null); setGpa(''); setSelectedField(null); setExpandedMajor(null); setPersonality({ thinking_style: '', personality_type: '', preferred_study: '', preferred_work: '' }); }}
+            onClick={() => { setStep(0); setStudentType(null); setMlResults(null); setGpa(''); setSelectedField(null); setPersonality({ thinking_style: '', personality_type: '', preferred_study: '', preferred_work: '' }); }}
             className={`btn btn-lg px-4 ${darkMode ? 'btn-outline-light' : 'btn-outline-secondary'}`}
           >
             {t('result_retake')}
@@ -1340,8 +1466,20 @@ function AssessmentPage() {
 }
 
 function UniversitiesPage() {
-  const { darkMode, t, lang } = useAppContext();
+  const { darkMode, t, lang, highlightedUni, setHighlightedUni } = useAppContext();
   const isEn = lang === 'en';
+  const [pulseUni, setPulseUni] = useState(highlightedUni);
+
+  React.useEffect(() => {
+    if (!highlightedUni) return;
+    setPulseUni(highlightedUni);
+    const scrollTimer = setTimeout(() => {
+      const slug = highlightedUni.replace(/\s+/g, '-').replace(/[^؀-ۿa-zA-Z0-9-]/g, '');
+      document.getElementById(`uni-${slug}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 350);
+    const clearTimer = setTimeout(() => { setPulseUni(null); setHighlightedUni(null); }, 3200);
+    return () => { clearTimeout(scrollTimer); clearTimeout(clearTimer); };
+  }, [highlightedUni]);
 
   const universities = [
     // ===== حكومية =====
@@ -1376,12 +1514,21 @@ function UniversitiesPage() {
     { type: 'private', ar: 'جامعة ابن سينا للعلوم الطبية',     en: 'Ibn Sina Univ. for Medical Sciences',    cityAr: 'عمّان',   cityEn: 'Amman',    website: 'https://isums.edu.jo',        image: 'https://isums.edu.jo/images/home_page/2.webp' },
   ].map(u => ({ ...u, name: isEn ? u.en : u.ar, city: isEn ? u.cityEn : u.cityAr }));
 
-  const UniCard = ({ uni }) => (
+  const UniCard = ({ uni }) => {
+    const isHighlighted = pulseUni === uni.ar;
+    const slug = uni.ar.replace(/\s+/g, '-').replace(/[^؀-ۿa-zA-Z0-9-]/g, '');
+    return (
     <div className="col-md-6 col-lg-4">
-      <div className={`card h-100 border-0 shadow-sm overflow-hidden ${darkMode ? 'bg-secondary text-white' : ''}`}
-        style={{ transition: 'transform 0.25s, box-shadow 0.25s' }}
-        onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-6px)'; e.currentTarget.style.boxShadow = '0 12px 32px rgba(0,0,0,0.18)'; }}
-        onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = ''; }}
+      <div
+        id={`uni-${slug}`}
+        className={`card h-100 border-0 overflow-hidden ${darkMode ? 'bg-secondary text-white' : ''}`}
+        style={{
+          transition: 'transform 0.25s, box-shadow 0.25s',
+          boxShadow: isHighlighted ? '0 0 0 3px #c62828, 0 12px 36px rgba(104,26,21,0.45)' : undefined,
+          animation: isHighlighted ? 'uniPulse 0.6s ease' : undefined,
+        }}
+        onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-6px)'; if (!isHighlighted) e.currentTarget.style.boxShadow = '0 12px 32px rgba(0,0,0,0.18)'; }}
+        onMouseLeave={e => { e.currentTarget.style.transform = ''; if (!isHighlighted) e.currentTarget.style.boxShadow = ''; }}
       >
         <div style={{
           height: '190px',
@@ -1408,6 +1555,7 @@ function UniversitiesPage() {
       </div>
     </div>
   );
+  };
 
   const publicUnis  = universities.filter(u => u.type === 'public');
   const privateUnis = universities.filter(u => u.type === 'private');
@@ -1841,6 +1989,9 @@ function Footer() {
   );
 }
 
+
+
+
 function Chatbot() {
   const { darkMode, t, lang } = useAppContext();
   const [isOpen, setIsOpen] = useState(false);
@@ -1890,6 +2041,10 @@ function Chatbot() {
       focusInput();
     }
   };
+
+
+
+
 
   return (
     <>
@@ -1958,6 +2113,8 @@ function Chatbot() {
             <div ref={messagesEndRef} />
           </div>
 
+
+
           {/* Input */}
           <div className={`card-footer ${darkMode ? 'bg-secondary' : ''}`}>
             <div className="input-group">
@@ -1979,6 +2136,8 @@ function Chatbot() {
                   }
                 }}
               />
+
+              
               <button onClick={handleSend} disabled={isTyping} className="btn btn-danger align-self-end">{t('chat_send')}</button>
             </div>
           </div>
@@ -1987,4 +2146,3 @@ function Chatbot() {
     </>
   );
 }
-
