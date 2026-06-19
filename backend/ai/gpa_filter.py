@@ -24,11 +24,11 @@ def _load_thresholds() -> dict:
         lambda row: next((v for v in row if pd.notna(v) and v > 0), None), axis=1
     )
 
-    # لكل تخصص خذ الوسيط (median) — يعكس الحد الواقعي بشكل أفضل من الـ min
+    # لكل تخصص خذ المتوسط (average) — يعطي تقديراً شاملاً عبر السنوات
     thresholds = (
         df.dropna(subset=['_threshold'])
         .groupby('التخصصات')['_threshold']
-        .median()
+        .mean()
         .to_dict()
     )
     return thresholds
