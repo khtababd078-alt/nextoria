@@ -26,7 +26,7 @@ const translations = {
     how_title: 'كيف يعمل Nextoria؟',
     how_subtitle: 'أربع خطوات بسيطة للوصول لتوصيتك',
     step1_title: 'اختر مرحلتك',
-    step1_desc: 'توجيهي أو صف عاشر — كل مرحلة لها مسار مخصص.',
+    step1_desc: 'توجيهي أو أول ثانوي — كل مرحلة لها مسار مخصص.',
     step2_title: 'أدخل بياناتك',
     step2_desc: 'علاماتك، اهتماماتك، وأسلوب شخصيتك.',
     step3_title: 'يحلل النموذج',
@@ -52,8 +52,8 @@ const translations = {
     // Assessment - type selection
     assess_tawjihi: 'توجيهي',
     assess_tawjihi_desc: 'اكتشف التخصص الجامعي الذي يناسب معدلك واهتماماتك',
-    assess_grade10: 'صف عاشر',
-    assess_grade10_desc: 'ساعدني في اختيار الفرع الدراسي المناسب لمستقبلي',
+    assess_firstSec: 'أول ثانوي',
+    assess_firstSec_desc: 'ساعدني في اختيار الفرع الدراسي المناسب لمستقبلي',
     assess_start: 'ابدأ هنا ←',
     assess_or: 'أو',
 
@@ -112,7 +112,7 @@ const translations = {
     opt_solo: 'العمل الفردي المستقل',
     opt_both: 'كلاهما يناسبني',
 
-    // Grade 10 steps
+    // First Secondary steps
     grades_title: 'علاماتك في المواد',
     grades_sub: 'أدخل علاماتك من 200 — اتركها فارغة إذا لم تدرسها',
     subj_math: 'رياضيات',
@@ -257,7 +257,7 @@ const translations = {
     how_title: 'How Does Nextoria Work?',
     how_subtitle: 'Four simple steps to get your recommendation',
     step1_title: 'Choose Your Stage',
-    step1_desc: 'Tawjihi or Grade 10 — each stage has a custom path.',
+    step1_desc: 'Tawjihi or First Secondary — each stage has a custom path.',
     step2_title: 'Enter Your Data',
     step2_desc: 'Your grades, interests, and personality style.',
     step3_title: 'Model Analyzes',
@@ -283,8 +283,8 @@ const translations = {
     // Assessment - type selection
     assess_tawjihi: 'Tawjihi',
     assess_tawjihi_desc: 'Discover the university major that suits your GPA and interests',
-    assess_grade10: 'Grade 10',
-    assess_grade10_desc: 'Help me choose the right study branch for my future',
+    assess_firstSec: 'First Secondary',
+    assess_firstSec_desc: 'Help me choose the right study branch for my future',
     assess_start: 'Start Here ←',
     assess_or: 'Or',
 
@@ -343,7 +343,7 @@ const translations = {
     opt_solo: 'Independent solo work',
     opt_both: 'Both suit me',
 
-    // Grade 10 steps
+    // First Secondary steps
     grades_title: 'Your Subject Grades',
     grades_sub: 'Enter your grades out of 200 — leave blank if not studied',
     subj_math: 'Mathematics',

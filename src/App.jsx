@@ -401,13 +401,13 @@ function AssessmentPage() {
   const [mlLoading, setMlLoading] = useState(false);
   const [mlError, setMlError] = useState(null);
 
-  // Grade 10 state
+  // First Secondary state
   const [formData, setFormData] = useState({
     subjects: { 'رياضيات': '', 'علوم': '', 'لغة عربية': '', 'لغة إنجليزية': '', 'كيمياء': '', 'فيزياء': '', 'أحياء': '', 'تربية إسلامية': '', 'تاريخ الأردن': '' },
     interests: { tech: 3, science: 3, health: 3, business: 3, arts: 3, social: 3 },
     personality: { thinking: '', social_type: '', learning: '' },
   });
-  const [grade10Results, setGrade10Results] = useState(null);
+  const [firstSecResults, setFirstSecResults] = useState(null);
   const [majorApiDesc, setMajorApiDesc] = useState({});
   const [majorApiLoading, setMajorApiLoading] = useState({});
   const fetchedMajors = React.useRef(new Set());
@@ -465,7 +465,7 @@ function AssessmentPage() {
     { key: 'تاريخ الأردن',    label: lang === 'en' ? 'Jordan History'      : 'تاريخ الأردن',    icon: '🏛️', color: '#6d4c41', max: 100 },
   ];
 
-  const grade10InterestLabels = {
+  const firstSecInterestLabels = {
     tech:     { label: lang === 'en' ? 'Technology & Engineering' : 'التكنولوجيا والهندسة', icon: '⚙️' },
     science:  { label: lang === 'en' ? 'Science & Experiments'   : 'العلوم والتجارب',      icon: '🔬' },
     health:   { label: lang === 'en' ? 'Health & Medicine'       : 'الصحة والطب',          icon: '🏥' },
@@ -487,9 +487,9 @@ function AssessmentPage() {
     setFormData({ ...formData, subjects: { ...formData.subjects, [subject]: value } });
   };
 
-  const handleGrade10Submit = () => {
+  const handleFirstSecSubmit = () => {
     const results = recommendField(formData.subjects, formData.interests, formData.personality, lang);
-    setGrade10Results(results);
+    setFirstSecResults(results);
     setStep(4);
   };
 
@@ -525,7 +525,7 @@ function AssessmentPage() {
     }
   };
 
-  const getTotalSteps = () => studentType === 'grade10' ? 3 : 4;
+  const getTotalSteps = () => studentType === 'firstSec' ? 3 : 4;
 
   if (step === 0) {
     return (
@@ -538,7 +538,7 @@ function AssessmentPage() {
           onMouseEnter={() => setHoveredSide('tawjihi')}
           onMouseLeave={() => setHoveredSide(null)}
           style={{
-            flex: hoveredSide === 'tawjihi' ? '0 0 62%' : hoveredSide === 'grade10' ? '0 0 38%' : '0 0 50%',
+            flex: hoveredSide === 'tawjihi' ? '0 0 62%' : hoveredSide === 'firstSec' ? '0 0 38%' : '0 0 50%',
             transition: 'flex 0.6s cubic-bezier(0.4,0,0.2,1)',
             background: 'linear-gradient(135deg, #2d0a08 0%, #4d120f 50%, #681a15 100%)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -602,14 +602,14 @@ function AssessmentPage() {
           }}>{lang === 'en' ? 'Or' : 'أو'}</div>
         </div>
 
-        {/* صف عاشر — RIGHT */}
+        {/* أول ثانوي — RIGHT */}
         <div
           className="split-screen-side"
-          onClick={() => handleStudentTypeSelect('grade10')}
-          onMouseEnter={() => setHoveredSide('grade10')}
+          onClick={() => handleStudentTypeSelect('firstSec')}
+          onMouseEnter={() => setHoveredSide('firstSec')}
           onMouseLeave={() => setHoveredSide(null)}
           style={{
-            flex: hoveredSide === 'grade10' ? '0 0 62%' : hoveredSide === 'tawjihi' ? '0 0 38%' : '0 0 50%',
+            flex: hoveredSide === 'firstSec' ? '0 0 62%' : hoveredSide === 'tawjihi' ? '0 0 38%' : '0 0 50%',
             transition: 'flex 0.6s cubic-bezier(0.4,0,0.2,1)',
             background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -618,7 +618,7 @@ function AssessmentPage() {
         >
           <div style={{
             position: 'absolute', inset: 0,
-            background: hoveredSide === 'grade10'
+            background: hoveredSide === 'firstSec'
               ? 'radial-gradient(circle at 50% 50%, rgba(100,150,255,0.22) 0%, transparent 65%)'
               : 'radial-gradient(circle at 70% 40%, rgba(100,150,255,0.08) 0%, transparent 60%)',
             transition: 'background 0.5s ease',
@@ -630,16 +630,16 @@ function AssessmentPage() {
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: '3.2rem', margin: '0 auto 28px',
               boxShadow: '0 12px 40px rgba(187,202,225,0.45)',
-              transform: hoveredSide === 'grade10' ? 'scale(1.12) translateY(-6px)' : 'scale(1)',
+              transform: hoveredSide === 'firstSec' ? 'scale(1.12) translateY(-6px)' : 'scale(1)',
               transition: 'transform 0.4s cubic-bezier(0.34,1.56,0.64,1)',
             }}>📚</div>
             <h2 style={{ fontSize: 'clamp(2rem,4vw,3.5rem)', fontWeight: 900, marginBottom: '14px', textShadow: '0 2px 12px rgba(0,0,0,0.4)' }}>
-              {lang === 'en' ? 'Grade 10' : 'أول ثانوي'}
+              {lang === 'en' ? 'First Secondary' : 'أول ثانوي'}
             </h2>
             <p style={{
               fontSize: '15px', color: 'rgba(187,202,225,0.85)',
               maxWidth: '260px', margin: '0 auto 36px', lineHeight: 1.9,
-              opacity: hoveredSide === 'grade10' ? 1 : 0.6,
+              opacity: hoveredSide === 'firstSec' ? 1 : 0.6,
               transition: 'opacity 0.4s ease',
             }}>
               {lang === 'en' ? 'Help me choose the right study branch for my future' : 'ساعدني في اختيار الفرع الدراسي المناسب لمستقبلي'}
@@ -648,9 +648,9 @@ function AssessmentPage() {
               display: 'inline-flex', alignItems: 'center', gap: '8px',
               border: '2px solid rgba(187,202,225,0.45)', borderRadius: '50px', padding: '12px 36px',
               fontSize: '15px', fontWeight: 700, color: '#bbcae1',
-              background: hoveredSide === 'grade10' ? 'rgba(187,202,225,0.15)' : 'transparent',
-              opacity: hoveredSide === 'grade10' ? 1 : 0.5,
-              transform: hoveredSide === 'grade10' ? 'translateY(0)' : 'translateY(8px)',
+              background: hoveredSide === 'firstSec' ? 'rgba(187,202,225,0.15)' : 'transparent',
+              opacity: hoveredSide === 'firstSec' ? 1 : 0.5,
+              transform: hoveredSide === 'firstSec' ? 'translateY(0)' : 'translateY(8px)',
               transition: 'all 0.4s ease',
             }}>
               {lang === 'en' ? 'Start Here →' : 'ابدأ هنا ←'}
@@ -662,9 +662,9 @@ function AssessmentPage() {
     );
   }
 
-  // Grade 10 results (step 4)
-  if (step === 4 && studentType === 'grade10' && grade10Results) {
-    const top = grade10Results[0];
+  // First Secondary results (step 4)
+  if (step === 4 && studentType === 'firstSec' && firstSecResults) {
+    const top = firstSecResults[0];
     return (
       <div className="container py-5" style={{ maxWidth: '860px' }}>
         <div className="text-center mb-5">
@@ -697,7 +697,7 @@ function AssessmentPage() {
         {/* All Fields */}
         <h5 className="fw-bold mb-3">{t('result_all_fields')}</h5>
         <div className="d-flex flex-column gap-2 mb-5">
-          {grade10Results.map((f, idx) => (
+          {firstSecResults.map((f, idx) => (
             <div key={f.id} className={`card border-0 shadow-sm ${darkMode ? 'bg-secondary text-white' : ''}`}>
               <div className="card-body py-3 px-4">
                 <div className="d-flex justify-content-between align-items-center mb-2">
@@ -721,7 +721,7 @@ function AssessmentPage() {
 
         <div className="d-flex gap-3 justify-content-center flex-wrap">
           <button
-            onClick={() => { setStep(0); setStudentType(null); setGrade10Results(null); setFormData({ subjects: { 'رياضيات': '', 'علوم': '', 'لغة عربية': '', 'لغة إنجليزية': '', 'كيمياء': '', 'فيزياء': '', 'أحياء': '' }, interests: { tech: 3, science: 3, health: 3, business: 3, arts: 3, social: 3 }, personality: { thinking: '', social_type: '', learning: '' } }); }}
+            onClick={() => { setStep(0); setStudentType(null); setFirstSecResults(null); setFormData({ subjects: { 'رياضيات': '', 'علوم': '', 'لغة عربية': '', 'لغة إنجليزية': '', 'كيمياء': '', 'فيزياء': '', 'أحياء': '' }, interests: { tech: 3, science: 3, health: 3, business: 3, arts: 3, social: 3 }, personality: { thinking: '', social_type: '', learning: '' } }); }}
             className={`btn btn-lg px-4 ${darkMode ? 'btn-outline-light' : 'btn-outline-secondary'}`}
           >
             {t('result_retake')}
@@ -1243,8 +1243,8 @@ function AssessmentPage() {
                 </div>
               )}
 
-              {/* ── GRADE 10 STEP 1: Subject Grades ── */}
-              {step === 1 && studentType === 'grade10' && (
+              {/* ── FIRST SEC STEP 1: Subject Grades ── */}
+              {step === 1 && studentType === 'firstSec' && (
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
                     <div style={{ width: '4px', height: '34px', borderRadius: '4px', background: 'linear-gradient(180deg,#681a15,#bbcae1)', flexShrink: 0 }} />
@@ -1291,8 +1291,8 @@ function AssessmentPage() {
                 </div>
               )}
 
-              {/* ── GRADE 10 STEP 2: Interests ── */}
-              {step === 2 && studentType === 'grade10' && (
+              {/* ── FIRST SEC STEP 2: Interests ── */}
+              {step === 2 && studentType === 'firstSec' && (
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
                     <div style={{ width: '4px', height: '34px', borderRadius: '4px', background: 'linear-gradient(180deg,#681a15,#bbcae1)', flexShrink: 0 }} />
@@ -1302,7 +1302,7 @@ function AssessmentPage() {
                     {t('interests_sub')}
                   </p>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
-                    {Object.entries(grade10InterestLabels).map(([key, { label, icon }]) => {
+                    {Object.entries(firstSecInterestLabels).map(([key, { label, icon }]) => {
                       const val = formData.interests[key];
                       const levelLabels = lang === 'en'
                         ? ['', 'Low', 'Light', 'Medium', 'Good', 'High']
@@ -1336,8 +1336,8 @@ function AssessmentPage() {
                 </div>
               )}
 
-              {/* ── GRADE 10 STEP 3: Personality ── */}
-              {step === 3 && studentType === 'grade10' && (
+              {/* ── FIRST SEC STEP 3: Personality ── */}
+              {step === 3 && studentType === 'firstSec' && (
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
                     <div style={{ width: '4px', height: '34px', borderRadius: '4px', background: 'linear-gradient(180deg,#681a15,#bbcae1)', flexShrink: 0 }} />
@@ -1435,7 +1435,7 @@ function AssessmentPage() {
                     </button>
                   )}
 
-                  {studentType === 'grade10' && step < getTotalSteps() && (
+                  {studentType === 'firstSec' && step < getTotalSteps() && (
                     <button
                       onClick={() => setStep(step + 1)}
                       disabled={step === 1 && !subjectList.every(s => parseFloat(formData.subjects[s.key]) > 0)}
@@ -1445,9 +1445,9 @@ function AssessmentPage() {
                     </button>
                   )}
 
-                  {studentType === 'grade10' && step === getTotalSteps() && (
+                  {studentType === 'firstSec' && step === getTotalSteps() && (
                     <button
-                      onClick={handleGrade10Submit}
+                      onClick={handleFirstSecSubmit}
                       disabled={!formData.personality.thinking || !formData.personality.social_type || !formData.personality.learning}
                       className="btn btn-danger btn-lg px-4"
                     >
